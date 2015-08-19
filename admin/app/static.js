@@ -7,10 +7,11 @@
  */
 
 var browserify = require('./browserify');
-var express = require('express');
-var less = require('less-middleware');
+var koa = require('koa');
+var less = require('koa-less');
 var path = require('path');
-var router = express.Router();
+var app = koa();
+var router = require('koa-router')();
 
 /* Prepare browserify bundles */
 
@@ -37,16 +38,26 @@ var lessOptions = {
 		modifyVars: {
 			reactSelectPath: JSON.stringify(reactSelectPath)
 		}
-	}
+	},
+	dest: path.join(__dirname, '../../public/styles'
 };
 
-/* Configure router */
+// less
+app.use(less('/styles', lessOptions));
 
-router.use('/styles', less(__dirname + '../../public/styles', lessOptions));
-router.use(express.static(__dirname + '../../public'));
+// static assets
+var serve = require('koa-static');
+var staticPath = path.join(__dirname, '../../public');
+app.use(serve(staticPath));
+
+// routes
 router.get('/js/fields.js', bundles.fields.serve);
 router.get('/js/home.js', bundles.home.serve);
 router.get('/js/item.js', bundles.item.serve);
 router.get('/js/list.js', bundles.list.serve);
+
+app
+  .use(router.routes())
+  .use(router.allowedMethods());
 
 module.exports = router;

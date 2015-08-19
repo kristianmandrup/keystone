@@ -32,8 +32,13 @@
     "debug": "^2.2.0",
     "embedly": "~1.0.4",
     "errorhandler": "^1.4.2",
-    "express": "~4.13.1",
-    "express-session": "~1.11.3",
+
+    "koa": "x",
+    "koa-router": "x",
+    "koa-session": "x",
+    "koa-static": "x",
+    "koa-less": "x",
+
     "fs-extra": "~0.22.1",
     "grappling-hook": "^2.5.0",
     "jade": "~1.11.0",
