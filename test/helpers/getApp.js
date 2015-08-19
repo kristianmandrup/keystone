@@ -1,15 +1,15 @@
 var keystone = require('../../index.js');
 var mongoose = require('./getMongooseConnection.js');
 var methodOverride = require('method-override');
-var bodyParser = require('body-parser');
+var bodyParser = require('koa-bodyparser');
 
-function getExpressApp() {
+function getApp() {
 	var app;
 
 	keystone.init({
 		'mongoose': mongoose
 	});
-	app = keystone.express();
+	app = keystone.koa();
 
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({
@@ -20,4 +20,4 @@ function getExpressApp() {
 	return app;
 }
 
-module.exports = getExpressApp;
+module.exports = getApp;

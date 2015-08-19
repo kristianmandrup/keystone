@@ -39,7 +39,7 @@ var lessOptions = {
 			reactSelectPath: JSON.stringify(reactSelectPath)
 		}
 	},
-	dest: path.join(__dirname, '../../public/styles'
+	dest: path.join(__dirname, '../../public/styles')
 };
 
 // less

@@ -1,5 +1,5 @@
 var _ = require('underscore');
-var express = require('express');
+var koa = require('koa');
 var fs = require('fs');
 var grappling = require('grappling-hook');
 var path = require('path');
@@ -41,7 +41,7 @@ var Keystone = function() {
 	this._redirects = {};
 
 	// expose express
-	this.express = express;
+	this.koa = koa;
 
 	// init environment defaults
 	this.set('env', process.env.NODE_ENV || 'development');
