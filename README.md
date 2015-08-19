@@ -18,6 +18,14 @@ This fork aims to make Keystone run on a Koa server, the next generation Express
 
 Please help out with the effort!
 
+Notes:
+
+For now removed SASS support, since it causes npm install problems on my system using IOjs 3.x
+
+```js
+    "koa-sass": "x",
+```
+
 About
 -----
 

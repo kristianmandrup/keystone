@@ -3,11 +3,13 @@ var Types = require('../lib/fieldTypes');
 var request = require('supertest');
 var demand = require('must');
 var async = require('async');
-var getExpressApp = require('./helpers/getExpressApp');
+var getApp = require('./helpers/getApp');
 var removeModel = require('./helpers/removeModel');
 
 describe('List "track" option', function () {
-	var app = getExpressApp();
+	var app = getApp();
+	var router = app.router;
+	var request = require('co-supertest').agent(app.listen());
 	var userModelName = 'User';
 	var testModelName = 'Test';
 	var User;
@@ -53,7 +55,7 @@ describe('List "track" option', function () {
 		}
 
 		// route to simulate use of updateHandler()
-		app.post('/using-update-handler/:id?', function(req, res) {
+		router.post('/using-update-handler/:id?', function(req, res) {
 
 			getItem(req.params.id, function(item) {
 				req.user = req.params.id ? dummyUser2 : dummyUser1;
@@ -70,7 +72,7 @@ describe('List "track" option', function () {
 		});
 
 		// route to simulate use of .save()
-		app.post('/using-save/:id?', function(req, res) {
+		router.post('/using-save/:id?', function(req, res) {
 
 			getItem(req.params.id, function(item) {
 				item._req_user = req.params.id ? dummyUser2 : dummyUser1;
@@ -97,7 +99,7 @@ describe('List "track" option', function () {
 		});
 
 		tasks.push(function(done) {
-			dummyUser1 = new User.model({ 
+			dummyUser1 = new User.model({
 				'name': 'John Doe'
 			}).save(function(err, data) {
 				if (err) {
@@ -109,7 +111,7 @@ describe('List "track" option', function () {
 		});
 
 		tasks.push(function(done) {
-			dummyUser2 = new User.model({ 
+			dummyUser2 = new User.model({
 				'name': 'Jane Doe'
 			}).save(function(err, data) {
 				if (err) {
@@ -129,7 +131,7 @@ describe('List "track" option', function () {
 	});
 
 	describe('when "track" option is not valid', function () {
-		
+
 		afterEach(function() {
 			removeModel(testModelName);
 		});
@@ -162,7 +164,7 @@ describe('List "track" option', function () {
 		});
 
 		it('should not register the plugin if all fields are false', function() {
-			Test = keystone.List(testModelName, { 
+			Test = keystone.List(testModelName, {
 				track: { createdAt: false, createdBy: false, updatedAt: false, updatedBy: false }
 			});
 			Test.add({ name: { type: String } });
@@ -214,7 +216,7 @@ describe('List "track" option', function () {
 			});
 
 			it('should updated all fields when adding a document', function(done) {
-				request(app)
+				request
 					.post('/using-update-handler')
 					.send({ name: 'test1' })
 					.expect('GOOD')
@@ -237,7 +239,7 @@ describe('List "track" option', function () {
 			it('should updated "updatedAt/updatedBy" when modifying a document', function(done) {
 
 				setTimeout(function() {
-					request(app)
+					request
 						.post('/using-update-handler/' + post.get('id'))
 						.send({ name: 'test2' })
 						.expect('GOOD')
@@ -257,7 +259,7 @@ describe('List "track" option', function () {
 						});
 				}, 250);
 			});
-			
+
 		});
 
 		describe('using .save()', function () {
@@ -298,7 +300,7 @@ describe('List "track" option', function () {
 
 			it('should updated all fields when adding a document', function(done) {
 
-				request(app)
+				request
 					.post('/using-save')
 					.send({ name: 'test1' })
 					.expect('GOOD')
@@ -322,7 +324,7 @@ describe('List "track" option', function () {
 			it('should updated "updatedAt/updatedBy" when modifying a document', function(done) {
 
 				setTimeout(function() {
-					request(app)
+					request
 						.post('/using-save/' + post._id)
 						.send({ name: 'test2' })
 						.expect('GOOD')
@@ -343,7 +345,7 @@ describe('List "track" option', function () {
 				}, 250);
 
 			});
-			
+
 		});
 
 	});
@@ -354,7 +356,7 @@ describe('List "track" option', function () {
 		describe('using updateHandler()', function() {
 
 			before(function() {
-				Test = keystone.List(testModelName, { 
+				Test = keystone.List(testModelName, {
 					track: { updatedAt: true, updatedBy: true }
 				});
 				Test.add({ name: { type: String } });
@@ -388,7 +390,7 @@ describe('List "track" option', function () {
 			});
 
 			it('should updated all enabled fields when adding a document', function(done) {
-				request(app)
+				request
 					.post('/using-update-handler')
 					.send({ name: 'test1' })
 					.expect('GOOD')
@@ -407,7 +409,7 @@ describe('List "track" option', function () {
 			it('should updated "updatedAt/updatedBy" when modifying a document', function(done) {
 
 				setTimeout(function() {
-					request(app)
+					request
 						.post('/using-update-handler/' + post._id)
 						.send({ name: 'test2' })
 						.expect('GOOD')
@@ -431,7 +433,7 @@ describe('List "track" option', function () {
 		describe('using .save()', function() {
 
 			before(function() {
-				Test = keystone.List(testModelName, { 
+				Test = keystone.List(testModelName, {
 					track: { updatedAt: true, updatedBy: true }
 				});
 				Test.add({ name: { type: String } });
@@ -465,7 +467,7 @@ describe('List "track" option', function () {
 			});
 
 			it('should updated all enabled fields when adding a document', function(done) {
-				request(app)
+				request
 					.post('/using-save')
 					.send({ name: 'test1' })
 					.expect('GOOD')
@@ -484,7 +486,7 @@ describe('List "track" option', function () {
 			it('should updated "updatedAt/updatedBy" when modifying a document', function(done) {
 
 				setTimeout(function() {
-					request(app)
+					request
 						.post('/using-save/' + post._id)
 						.send({ name: 'test2' })
 						.expect('GOOD')
@@ -502,7 +504,7 @@ describe('List "track" option', function () {
 				}, 250);
 
 			});
-			
+
 		});
 
 	});
@@ -513,11 +515,11 @@ describe('List "track" option', function () {
 		describe('using updateHandler()', function() {
 
 			before(function() {
-				Test = keystone.List(testModelName, { 
-					track: { 
+				Test = keystone.List(testModelName, {
+					track: {
 						createdAt: 'customCreatedAt',
 						createdBy: 'customCreatedBy',
-						updatedAt: 'customUpdatedAt', 
+						updatedAt: 'customUpdatedAt',
 						updatedBy: 'customUpdatedBy'
 					}
 				});
@@ -561,7 +563,7 @@ describe('List "track" option', function () {
 			});
 
 			it('should updated all custom fields when adding a document', function(done) {
-				request(app)
+				request
 					.post('/using-update-handler')
 					.send({ name: 'test1' })
 					.expect('GOOD')
@@ -584,7 +586,7 @@ describe('List "track" option', function () {
 			it('should updated "UpdatedAt/UpdatedBy" custom when modifying a document', function(done) {
 
 				setTimeout(function() {
-					request(app)
+					request
 						.post('/using-update-handler/' + post._id)
 						.send({ name: 'test2' })
 						.expect('GOOD')
@@ -604,15 +606,15 @@ describe('List "track" option', function () {
 			});
 
 		});
-		
+
 		describe('using save()', function() {
 
 			before(function() {
-				Test = keystone.List(testModelName, { 
-					track: { 
+				Test = keystone.List(testModelName, {
+					track: {
 						createdAt: 'customCreatedAt',
 						createdBy: 'customCreatedBy',
-						updatedAt: 'customUpdatedAt', 
+						updatedAt: 'customUpdatedAt',
 						updatedBy: 'customUpdatedBy'
 					}
 				});
@@ -656,7 +658,7 @@ describe('List "track" option', function () {
 			});
 
 			it('should updated all custom fields when adding a document', function(done) {
-				request(app)
+				request
 					.post('/using-save')
 					.send({ name: 'test1' })
 					.expect('GOOD')
@@ -679,7 +681,7 @@ describe('List "track" option', function () {
 			it('should updated "UpdatedAt/UpdatedBy" custom when modifying a document', function(done) {
 
 				setTimeout(function() {
-					request(app)
+					request
 						.post('/using-save/' + post._id)
 						.send({ name: 'test2' })
 						.expect('GOOD')
@@ -699,7 +701,7 @@ describe('List "track" option', function () {
 			});
 
 		});
-		
+
 	});
-	
+
 });

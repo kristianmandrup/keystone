@@ -38,8 +38,11 @@
     "koa-static": "x",
     "koa-less": "x",
     "koa-stylus": "x",
-    "koa-sass": "x",
+
     "koa-bodyparser": "x",
+    "koa-methodoverride": "x",
+    "supertest-koa-agent": "x",
+    "co-supertest": "x",
 
     "fs-extra": "~0.22.1",
     "grappling-hook": "^2.5.0",

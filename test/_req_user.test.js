@@ -1,15 +1,19 @@
 var keystone = require('../index.js');
-var request = require('supertest');
+// var request = require('supertest');
+var agent = require('supertest-koa-agent');
 var demand = require('must');
 var getApp = require('./helpers/getApp');
 var removeModel = require('./helpers/removeModel');
 
 describe('List schema pre/post save hooks', function() {
 	var app = getApp();
+	var router = app.router;
 	var dummyUser = { _id: 'USERID' };
 	var Test;
 	var pre;
 	var post;
+
+	var request = require('co-supertest').agent(app.listen());
 
 	before(function() {
 		// in case other modules didn't cleanup
@@ -27,7 +31,7 @@ describe('List schema pre/post save hooks', function() {
 			post = this._req_user;
 		});
 
-		Test.register();
+		// Test.register();
 	});
 
 	// cleanup
@@ -41,20 +45,25 @@ describe('List schema pre/post save hooks', function() {
 			pre = undefined;
 			post = undefined;
 
-			app.post('/using-update-handler', function(req, res) {
+			router.post('/using-update-handler', function*(next) {
 				var item = new Test.model();
-				req.user = dummyUser;
-				var updateHandler = item.getUpdateHandler(req);
-				updateHandler.process(req.body, function(err, data) {
+				var ctx = this;
+				ctx.req.user = dummyUser;
+				var updateHandler = item.getUpdateHandler(ctx.req);
+				updateHandler.process(ctx.body, function(err, data) {
 					if (err) {
-						res.send('BAD');
+						console.log('err', err);
+						ctx.body = 'BAD';
+						// res.send('BAD');
 					} else {
-						res.send('GOOD');
+						ctx.body = 'GOOD';
+						// res.send('GOOD');
 					}
+					next()
 				});
 			});
 
-			request(app)
+			request
 				.post('/using-update-handler')
 				.send({ name: 'test' })
 				.expect('GOOD')
@@ -75,19 +84,25 @@ describe('List schema pre/post save hooks', function() {
 			pre = undefined;
 			post = undefined;
 
-			app.post('/using-save', function(req, res) {
-				req.user = dummyUser;
+			router.post('/using-save', function *(next) {
+				this.user = dummyUser;
+				var ctx = this;
 				var item = new Test.model(req.body);
 				item.save(function(err, data) {
+					log('ctx', ctx)
 					if (err) {
-						res.send('BAD');
+						console.log(err);
+						ctx.body ='BAD';
 					} else {
-						res.send('GOOD');
+						console.log('response', 'GOOD');
+						ctx.body = 'GOOD';
+						// res.send('GOOD');
 					}
+					next();
 				});
 			});
 
-			request(app)
+			request
 				.post('/using-save')
 				.send({ name: 'test' })
 				.expect('GOOD')
