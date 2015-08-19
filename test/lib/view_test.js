@@ -175,56 +175,54 @@ describe('Keystone.View', function() {
 
 		function getApp_conditionalPostTruthy() {
 			var app = getApp();
-			app.post('/', function(req, res) {
-				var view = new keystone.View(req, res);
+			app.post('/', function*() {
+				var ctx = this;
+				var view = new keystone.View(ctx.req, ctx.res);
+
 				var status = 'OK';
-				view.on('post', { test: true }, function(next) {
+				view.on('post', { test: true }, function() {
 					status = 'OK POST';
-					next();
 				});
 				view.render(function() {
-					res.send(status);
+					ctx.body = status;
 				});
 			});
 			return app;
 		}
 
-		// it('must invoke post actions with body data present', function(done) {
-		// 	request(getApp_conditionalPostTruthy())
-		// 		.post('/')
-		// 		.send({ test: 'yes' })
-		// 		.expect('OK POST', done);
-		// });
-		//
-		// it('must skip post actions without matching body data', function(done) {
-		// 	request(getApp_conditionalPostTruthy())
-		// 		.post('/')
-		// 		.expect('OK', done);
-		// });
+		it('must invoke post actions with body data present', function*() {
+			var res = yield request(getApp_conditionalPostTruthy())
+				.post('/')
+				.send({ test: 'yes' }).end();
+
+			expect(res.text).to.eql('OK POST');
+		});
+
+		it('must skip post actions without matching body data', function*() {
+			var res = yield request(getApp_conditionalPostTruthy()).post('/').end();
+			expect(res.text).to.eql('OK');
+		});
 
 		function getApp_extRequest() {
 			var app = getApp();
-			router.get('/', function(req, res) {
-				req.ext = { prop: 'value' };
-				var view = new keystone.View(req, res);
+			router.get('/', function*() {
+				var ctx = this;
+				ctx.req.ext = { prop: 'value' };
+				var view = new keystone.View(ctx.req, ctx.res);
 				var status = 'NOT OK';
 				view.on({ 'ext.prop': 'value' }, function(next) {
 					status = 'OK';
-					next();
 				});
 				view.render(function() {
-					res.send(status);
+					ctx.body = status;
 				});
 			});
 			return app;
 		}
 
-		// it('must invoke actions based on req properties', function(done) {
-		// 	request(getApp_extRequest())
-		// 		.get('/')
-		// 		.expect('OK', done);
-		// });
-
+		it('must invoke actions based on req properties', function*() {
+			var res = yield request(getApp_extRequest()).get('/').end();
+			expect(res.text).to.eql('OK');
+		});
 	});
-
 });
