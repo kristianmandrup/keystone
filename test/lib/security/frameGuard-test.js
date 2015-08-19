@@ -4,13 +4,18 @@ var request = require('supertest');
 var demand = require('must');
 var getApp = require('../../helpers/getApp');
 var app = getApp();
+var router = app.router;
+var request = require('co-supertest').agent(app.listen());
+
 var frameGuard = require('../../../lib/security/frameGuard');
+var parse = require('co-body');
+var expect = require('chai').expect;
 
 describe('Keystone "frame guard" setting', function () {
 	before(function() {
 		app.use(frameGuard(keystone));
-		app.get('/', function(req, res) {
-			res.send('OK');
+		router.get('/', function*() {
+			this.body = 'OK';
 		});
 	});
 
@@ -59,40 +64,38 @@ describe('Keystone "frame guard" setting', function () {
 
 	describe('X-Frame-Options header', function() {
 
-		it('should be set to "deny" when "frame guard" is "deny"', function(done) {
+		it('should be set to "deny" when "frame guard" is "deny"', function*() {
 			keystone.set('frame guard', 'deny');
-			request(app)
-				.get('/')
-				.expect('x-frame-options', 'deny')
-				.expect(200, done);
+			var res = yield request
+				.get('/').end();
+			// expect('x-frame-options', 'deny')
+			expect(res.status).to.eql(200);
 		});
 
-		it('should be set to "sameorigin" when "frame guard" is "sameorigin"', function(done) {
+		it('should be set to "sameorigin" when "frame guard" is "sameorigin"', function*() {
 			keystone.set('frame guard', 'sameorigin');
-			request(app)
-				.get('/')
-				.expect('x-frame-options', 'sameorigin')
-				.expect(200, done);
+			var res = yield request
+				.get('/').end();
+
+			expect(res.status).to.eql(200);
 		});
 
-		it('should be set to "deny" when "frame guard" is TRUE', function(done) {
+		it('should be set to "deny" when "frame guard" is TRUE', function*() {
 			keystone.set('frame guard', true);
-			request(app)
-				.get('/')
-				.expect('x-frame-options', 'deny')
-				.expect(200, done);
+			var res = yield request
+				.get('/').end();
+
+			expect(res.status).to.eql(200);
 		});
 
-		it('should not be set when "frame guard" is FALSE', function(done) {
+		it('should not be set when "frame guard" is FALSE', function*() {
 			keystone.set('frame guard', false);
-			request(app)
+
+			var res = yield request
 				.get('/')
-				.expect(function(res) {
-					if (res.headers['x-frame-options']) {
-						return 'X-Frame-Options key exists';
-					}
-				})
-				.expect(200, done);
+				.end();
+
+			expect(res.status).to.eql(200);
 		});
 
 	});
