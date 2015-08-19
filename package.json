@@ -43,6 +43,7 @@
     "koa-methodoverride": "x",
     "supertest-koa-agent": "x",
     "co-supertest": "x",
+    "co-body": "x",
 
     "fs-extra": "~0.22.1",
     "grappling-hook": "^2.5.0",
@@ -88,6 +89,7 @@
     "gulp-uglify": "^1.2.0",
     "istanbul": "^0.3.17",
     "mocha": "^2.2.5",
+    "chai": "x",
     "must": ">= 0.12 < 1",
     "rimraf": "^2.4.2",
     "sinon": "~1.15.4",
@@ -140,7 +142,7 @@
     "clean": "rimraf ./coverage"
   },
   "engines": {
-    "node": ">= 0.10.28",
+    "node": ">= 0.12.7",
     "npm": ">= 1.4.9"
   }
 }

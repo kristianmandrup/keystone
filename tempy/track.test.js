@@ -55,16 +55,19 @@ describe('List "track" option', function () {
 		}
 
 		// route to simulate use of updateHandler()
-		router.post('/using-update-handler/:id?', function(req, res) {
+		router.post('/using-update-handler/:id?', function*() {
+			var ctx = this;
+			var req = ctx.req;
+			var res = ctx.res;
 
 			getItem(req.params.id, function(item) {
 				req.user = req.params.id ? dummyUser2 : dummyUser1;
-				var updateHandler = item.getUpdateHandler(req);
-				updateHandler.process(req.body, function(err, data) {
+				var updateHandler = item.getUpdateHandler(ctx.req);
+				updateHandler.process(ctx.body, function(err, data) {
 					if (err) {
-						res.send('BAD');
+						ctx.body = 'BAD';
 					} else {
-						res.send('GOOD');
+						ctx.body = 'GOOD';
 					}
 				});
 			});

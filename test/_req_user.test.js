@@ -4,6 +4,8 @@ var agent = require('supertest-koa-agent');
 var demand = require('must');
 var getApp = require('./helpers/getApp');
 var removeModel = require('./helpers/removeModel');
+var parse = require('co-body');
+var expect = require('chai').expect;
 
 describe('List schema pre/post save hooks', function() {
 	var app = getApp();
@@ -12,6 +14,7 @@ describe('List schema pre/post save hooks', function() {
 	var Test;
 	var pre;
 	var post;
+	var testProps;
 
 	var request = require('co-supertest').agent(app.listen());
 
@@ -21,7 +24,7 @@ describe('List schema pre/post save hooks', function() {
 
 		// create test model
 		Test = keystone.List('Test'),
-		Test.add({ name: { type: String } });
+		Test.add({name: { type: String }});
 		Test.schema.pre('save', function(next, done) {
 			pre = this._req_user;
 			next();
@@ -31,7 +34,7 @@ describe('List schema pre/post save hooks', function() {
 			post = this._req_user;
 		});
 
-		// Test.register();
+		Test.register();
 	});
 
 	// cleanup
@@ -41,38 +44,38 @@ describe('List schema pre/post save hooks', function() {
 
 	describe('when using UpdateHandler()', function() {
 
-		it('should receive ._req_user', function (done) {
+		it('should receive ._req_user', function*() {
 			pre = undefined;
 			post = undefined;
 
-			router.post('/using-update-handler', function*(next) {
+			router.post('/using-update-handler', function*() {
 				var item = new Test.model();
+				var object = yield parse(this);
 				var ctx = this;
 				ctx.req.user = dummyUser;
 				var updateHandler = item.getUpdateHandler(ctx.req);
-				updateHandler.process(ctx.body, function(err, data) {
+				updateHandler.process(object, function(err, data) {
 					if (err) {
-						console.log('err', err);
 						ctx.body = 'BAD';
 						// res.send('BAD');
 					} else {
 						ctx.body = 'GOOD';
 						// res.send('GOOD');
 					}
-					next()
 				});
 			});
 
-			request
-				.post('/using-update-handler')
-				.send({ name: 'test' })
-				.expect('GOOD')
-				.end(function(err, res){
-					if (err) return done(err);
-					demand(pre).be(dummyUser);
-					demand(post).be(dummyUser);
-					done();
-				});
+			// var res = yield request.get('/').expect(200).end();
+	    // expect(res.text).to.equal('Hello, World');
+			var res = yield request.post('/using-update-handler').send({ name: 'test' }).end();
+			expect(res.text).to.eql('GOOD');
+
+				// .end(function(err, res){
+				// 	if (err) return done(err);
+				// 	demand(pre).be(dummyUser);
+				// 	demand(post).be(dummyUser);
+				// 	done();
+				// });
 
 		});
 
@@ -80,16 +83,15 @@ describe('List schema pre/post save hooks', function() {
 
 	describe('when using .save()', function() {
 
-		it('should not receive ._req_user', function (done) {
+		it('should not receive ._req_user', function*() {
 			pre = undefined;
 			post = undefined;
 
-			router.post('/using-save', function *(next) {
-				this.user = dummyUser;
+			router.post('/using-save', function *() {
 				var ctx = this;
-				var item = new Test.model(req.body);
+				ctx.req.user = dummyUser;
+				var item = new Test.model(ctx.body);
 				item.save(function(err, data) {
-					log('ctx', ctx)
 					if (err) {
 						console.log(err);
 						ctx.body ='BAD';
@@ -98,20 +100,22 @@ describe('List schema pre/post save hooks', function() {
 						ctx.body = 'GOOD';
 						// res.send('GOOD');
 					}
-					next();
 				});
 			});
 
-			request
+			var res = yield request
 				.post('/using-save')
 				.send({ name: 'test' })
-				.expect('GOOD')
-				.end(function(err, res){
-					if (err) return done(err);
-					demand(pre).be.undefined();
-					demand(post).be.undefined();
-					done();
-				});
+				.end();
+
+			expect(res.text).to.eql('GOOD');
+
+				// .end(function(err, res){
+				// 	if (err) return done(err);
+				// 	demand(pre).be.undefined();
+				// 	demand(post).be.undefined();
+				// 	done();
+				// });
 
 		});
 
